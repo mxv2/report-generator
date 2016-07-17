@@ -1,15 +1,10 @@
 package ru.mkiryanov.report.generator.formatter;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * User: maxim-kiryanov
@@ -36,7 +31,6 @@ public class TextBoundaryFormatter extends AbstractTextFormatter {
 			list.add(formattingBuilder.substring(i, i + maxWidth));
 		}
 
-		System.out.println(list);
 		return list.iterator();
 	}
 
@@ -101,13 +95,5 @@ public class TextBoundaryFormatter extends AbstractTextFormatter {
 		while (count-- > 0) {
 			stringBuilder.append(' ');
 		}
-	}
-
-	public static void main(String[] args) {
-		System.out.println(
-				IntStream.range(0, 2)
-						.map(operand -> operand * 10)
-						.mapToObj(Integer::valueOf)
-						.collect(toList()));
 	}
 }
