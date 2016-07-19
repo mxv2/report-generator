@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -46,37 +48,37 @@ public class TextBoundaryFormatterMultipleStringTest {
 
 	@Test
 	public void testFormatString() {
-		Iterator<String> formattedStrings = formatter.formatToStringIterator(originString);
+		List<String> formattedStrings = formatter.formatToStringList(originString);
 
-		assertThat("Invalid result for string \"" + originString + "\"", formattedStrings, hasItems(expectedStrings));
+		assertThat("Invalid result for string \"" + originString + "\"", formattedStrings, is(expectedStrings));
 	}
 
-	private Matcher<Iterator<String>> hasItems(final Collection<String> collection) {
-		return new BaseMatcher<Iterator<String>>() {
-			@Override
-			public boolean matches(Object o) {
-				Iterator<String> actualIterator = (Iterator<String>) o;
-				Iterator<String> expectedIterator = collection.iterator();
-
-				while (actualIterator.hasNext() && expectedIterator.hasNext()) {
-					String actual = actualIterator.next();
-					String expected = expectedIterator.next();
-					if (!actual.equals(expected)) {
-						return false;
-					}
-				}
-
-				if (actualIterator.hasNext() || expectedIterator.hasNext()) {
-					return false;
-				}
-
-				return true;
-			}
-
-			@Override
-			public void describeTo(Description description) {
-
-			}
-		};
-	}
+//	private Matcher<Iterator<String>> hasItems(final Collection<String> collection) {
+//		return new BaseMatcher<Iterator<String>>() {
+//			@Override
+//			public boolean matches(Object o) {
+//				Iterator<String> actualIterator = (Iterator<String>) o;
+//				Iterator<String> expectedIterator = collection.iterator();
+//
+//				while (actualIterator.hasNext() && expectedIterator.hasNext()) {
+//					String actual = actualIterator.next();
+//					String expected = expectedIterator.next();
+//					if (!actual.equals(expected)) {
+//						return false;
+//					}
+//				}
+//
+//				if (actualIterator.hasNext() || expectedIterator.hasNext()) {
+//					return false;
+//				}
+//
+//				return true;
+//			}
+//
+//			@Override
+//			public void describeTo(Description description) {
+//
+//			}
+//		};
+//	}
 }

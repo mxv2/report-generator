@@ -1,6 +1,6 @@
 package ru.mkiryanov.report.generator.formatter;
 
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * User: maxim-kiryanov
@@ -8,5 +8,5 @@ import java.util.Iterator;
  */
 public interface TextFormatter {
 	String format(String text);
-	Iterator<String> formatToStringIterator(String text);
+	List<String> formatToStringList(String text);
 }

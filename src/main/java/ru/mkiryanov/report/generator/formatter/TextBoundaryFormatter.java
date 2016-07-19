@@ -1,7 +1,6 @@
 package ru.mkiryanov.report.generator.formatter;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,11 +18,11 @@ public class TextBoundaryFormatter extends AbstractTextFormatter {
 
 	@Override
 	public String format(String text) {
-		return formatToStringIterator(text).next();
+		return formatToStringList(text).get(0);
 	}
 
 	@Override
-	public Iterator<String> formatToStringIterator(String text) {
+	public List<String> formatToStringList(String text) {
 		StringBuilder formattingBuilder = format(text, maxWidth);
 
 		List<String> list = new ArrayList<>();
@@ -31,7 +30,7 @@ public class TextBoundaryFormatter extends AbstractTextFormatter {
 			list.add(formattingBuilder.substring(i, i + maxWidth));
 		}
 
-		return list.iterator();
+		return list;
 	}
 
 	private StringBuilder format(String text, int offset) {
