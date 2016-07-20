@@ -5,7 +5,7 @@ package ru.mkiryanov.report.model;
  * Time: 18.07.16 22:37
  */
 public class Column {
-	private int id;
+	private Integer id;
 	private String title;
 	private int width;
 
@@ -25,5 +25,15 @@ public class Column {
 
 	public int getWidth() {
 		return width;
+	}
+
+	@Override
+	public int hashCode() {
+		return id.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return (obj instanceof Column) && id.equals(((Column) obj).getId());
 	}
 }

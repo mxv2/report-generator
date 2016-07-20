@@ -6,20 +6,15 @@ import ru.mkiryanov.report.generator.formatter.TextFormatter;
 import ru.mkiryanov.report.io.reader.Reader;
 import ru.mkiryanov.report.io.reader.TabDelimitedFileReader;
 import ru.mkiryanov.report.model.Column;
-import ru.mkiryanov.report.model.ModelProvider;
 import ru.mkiryanov.report.model.Report;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * User: maxim-kiryanov
@@ -29,15 +24,18 @@ public class Generator {
 	private ModelProvider modelProvider;
 
 	public void generate(final Context context) {
-		ModelProvider modelProvider = new ModelProvider(context, getReader(context), getInputStream(context));
+		try (InputStream in = getInputStream(context);
+		     PrintWriter pw = getOutputStream(context)) {
+			ModelProvider modelProvider = new ModelProvider(context, getReader(context), in);
 
-		Report reportModel = modelProvider.getModel();
-		final Map<Column, TextFormatter> formatters = createFormatters(context);
+			Report reportModel = modelProvider.getModel();
+			Printer printer = new Printer(context, createFormatters(context), pw);
 
-		for (int i = 0; i < reportModel.getRowsCount(); i++) {
-			List<List<String>> formattedContents = formatContents(context, reportModel.getRow(i), formatters);
-
-
+			for (int i = 0; i < reportModel.getRowsCount(); i++) {
+				printer.print(reportModel.getRow(i));
+			}
+		} catch (Exception e) {
+			throw new GeneratorException("Error", e);
 		}
 	}
 
@@ -53,6 +51,15 @@ public class Generator {
 		}
 	}
 
+	private PrintWriter getOutputStream(Context context) {
+		try {
+			return new PrintWriter(new OutputStreamWriter(
+					new FileOutputStream(context.getOutputFile()), context.getCharsetName()), true);
+		} catch (Exception e) {
+			throw new GeneratorException("Problem with output", e);
+		}
+	}
+
 	private Map<Column, TextFormatter> createFormatters(Context context) {
 		Map<Column, TextFormatter> formatterToColumns = new HashMap<>();
 
@@ -63,16 +70,27 @@ public class Generator {
 		return formatterToColumns;
 	}
 
-	private List<List<String>> formatContents(Context context, Map<Column, String> row, Map<Column, TextFormatter> formatters) {
-		List<List<String>> contents = new ArrayList<>(row.size());
+	public static Context newContext() {
+		Context context = new Context();
+		context.setCharsetName("UTF-16");
+		URL url = Generator.class.getResource("/source-data.tsv");
+		context.setDataFile(url.getFile());
+		context.setOutputFile("report.txt");
 
-		for (Column column : context.getColumns()) {
-			String content = row.get(column);
-			TextFormatter formatter = formatters.get(column);
-			contents.add(formatter.formatToStringList(content));
-		}
+		context.setPageWidth(32);
+		context.setPageHeight(12);
 
-		return contents;
+		List<Column> columns = new ArrayList<>();
+		columns.add(new Column(1, "Номер", 8));
+		columns.add(new Column(2, "Дата", 7));
+		columns.add(new Column(3, "ФИО", 7));
+		context.setColumns(columns);
+
+		return context;
+	}
+
+	public static void main(String[] args) {
+		new Generator().generate(newContext());
 	}
 
 	public static class Context {
@@ -83,6 +101,7 @@ public class Generator {
 		private int pageHeight;
 
 		private List<Column> columns = new ArrayList<>();
+		private String outputFile;
 
 		public String getCharsetName() {
 			return charsetName;
@@ -122,6 +141,14 @@ public class Generator {
 
 		public void setColumns(List<Column> columns) {
 			this.columns = columns;
+		}
+
+		public String getOutputFile() {
+			return outputFile;
+		}
+
+		public void setOutputFile(String outputFile) {
+			this.outputFile = outputFile;
 		}
 	}
 }

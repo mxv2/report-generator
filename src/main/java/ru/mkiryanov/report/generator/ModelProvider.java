@@ -1,7 +1,10 @@
-package ru.mkiryanov.report.model;
+package ru.mkiryanov.report.generator;
 
 import ru.mkiryanov.report.generator.Generator;
+import ru.mkiryanov.report.generator.exception.GeneratorException;
 import ru.mkiryanov.report.io.reader.Reader;
+import ru.mkiryanov.report.model.Column;
+import ru.mkiryanov.report.model.Report;
 
 import java.io.InputStream;
 import java.util.List;
@@ -29,7 +32,7 @@ public class ModelProvider {
 		long rowIndex = 0;
 		for (String[] line : reader.getLines()) {
 			if (line.length != columns.size()) {
-				throw new RuntimeException("Malformed data");
+				throw new GeneratorException("Malformed data", null);
 			}
 
 			for (int colIndex = 0; colIndex < line.length; colIndex++) {
