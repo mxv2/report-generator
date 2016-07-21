@@ -7,7 +7,9 @@ import ru.mkiryanov.report.io.reader.Reader;
 import ru.mkiryanov.report.io.reader.TabDelimitedFileReader;
 import ru.mkiryanov.report.model.Column;
 import ru.mkiryanov.report.model.Report;
+import ru.mkiryanov.report.settings.Settings;
 
+import javax.xml.bind.JAXBException;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -15,14 +17,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * User: maxim-kiryanov
  * Time: 18.07.16 22:48
  */
 public class Generator {
-	private ModelProvider modelProvider;
-
 	public void generate(final Context context) {
 		try (InputStream in = getInputStream(context);
 		     PrintWriter pw = getOutputStream(context)) {
@@ -70,27 +73,24 @@ public class Generator {
 		return formatterToColumns;
 	}
 
-	public static Context newContext() {
+	public static Context newContext(Settings settings, String inputFileName,
+	                                 String outputFileName, String charsetName) {
 		Context context = new Context();
-		context.setCharsetName("UTF-16");
-		URL url = Generator.class.getResource("/source-data.tsv");
-		context.setDataFile(url.getFile());
-		context.setOutputFile("report.txt");
+		context.setCharsetName(charsetName);
+		context.setDataFile(inputFileName);
+		context.setOutputFile(outputFileName);
 
-		context.setPageWidth(32);
-		context.setPageHeight(12);
+		context.setPageWidth(settings.getPage().getWidth());
+		context.setPageHeight(settings.getPage().getHeight());
 
-		List<Column> columns = new ArrayList<>();
-		columns.add(new Column(1, "Номер", 8));
-		columns.add(new Column(2, "Дата", 7));
-		columns.add(new Column(3, "ФИО", 7));
-		context.setColumns(columns);
+		context.setColumns(IntStream.range(0, settings.getColumns().size())
+				.mapToObj(i -> {
+					Settings.Column columnSettings = settings.getColumns().get(i);
+					return new Column(i, columnSettings.getTitle(), columnSettings.getWidth());
+				})
+				.collect(toList()));
 
 		return context;
-	}
-
-	public static void main(String[] args) {
-		new Generator().generate(newContext());
 	}
 
 	public static class Context {
@@ -150,5 +150,44 @@ public class Generator {
 		public void setOutputFile(String outputFile) {
 			this.outputFile = outputFile;
 		}
+	}
+
+	private static final String DEFAULT_CHARSET_NAME = "UTF-16";
+	private static final String USAGE_MESSAGE = "Usage: Generator [settings file] [source file] " +
+			"[result file] [charset (default=\"" + DEFAULT_CHARSET_NAME + "\")]?";
+	private static final String FINAL_MESSAGE_TEMPLATE = "Report was generated (%.3f ms)";
+
+	public static void main(String[] args) {
+		if (args.length < 3) {
+			System.out.println(USAGE_MESSAGE);
+			System.exit(1);
+		}
+
+		String settingsFileName = args[0];
+		String sourceFileName = args[1];
+		String resultFileName = args[2];
+
+		long start = System.nanoTime();
+		Settings settings = null;
+		try {
+			settings = Settings.read(settingsFileName);
+		} catch (JAXBException e) {
+			System.out.println("Can not read settings:\n" + e);
+			System.exit(1);
+		}
+
+		new Generator().generate(
+				newContext(settings, sourceFileName, resultFileName, getCharsetOrDefault(args)));
+
+		System.out.println(String.format(FINAL_MESSAGE_TEMPLATE, elapsed(start)));
+		System.exit(0);
+	}
+
+	private static String getCharsetOrDefault(String... args) {
+		return args.length > 3 ? args[3] : DEFAULT_CHARSET_NAME;
+	}
+
+	private static double elapsed(long start) {
+		return (System.nanoTime() - start) / 1_000_000.0;
 	}
 }
