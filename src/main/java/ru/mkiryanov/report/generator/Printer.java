@@ -4,10 +4,10 @@ import ru.mkiryanov.report.generator.formatter.TextFormatter;
 import ru.mkiryanov.report.model.Column;
 
 import java.io.PrintWriter;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toMap;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * User: maxim-kiryanov
@@ -27,7 +27,6 @@ public class Printer {
 	private StringBuilder formatterBuilder = new StringBuilder();
 	private Formatter formatter = new Formatter(formatterBuilder);
 	private Map<Column, List<String>> headerContents;
-	private int headerDeepSize;
 
 	private boolean isNewPage;
 	private int currentRowPosition;
@@ -70,10 +69,12 @@ public class Printer {
 		Map<Column, List<String>> contents = formatContents(row, context, textFormatters);
 		int deepSize = findMaxSize(contents);
 
-		if (currentRowPosition + deepSize >= pageHeight) {
-			writer.println(pageDelimeter);
-			currentRowPosition++;
+		if (currentRowPosition != 0 && currentRowPosition + 1 + deepSize > pageHeight) {
 			isNewPage = true;
+			writer.println(pageDelimeter);
+		} else if (currentRowPosition > 0){
+			writer.println(rowDelimeter);
+			currentRowPosition++;
 		}
 
 		if (isNewPage) {
@@ -86,8 +87,6 @@ public class Printer {
 		}
 
 		currentRowPosition += printRow(contents, deepSize);
-		writer.println(rowDelimeter);
-		currentRowPosition++;
 	}
 
 	private int printRow(Map<Column, List<String>> contents, int deepSize) {
